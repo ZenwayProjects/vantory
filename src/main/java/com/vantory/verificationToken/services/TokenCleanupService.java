@@ -1,0 +1,23 @@
+package com.vantory.verificationToken.services;
+
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.vantory.verificationToken.repositories.VerificationTokenRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class TokenCleanupService {
+
+	private final VerificationTokenRepository verificationTokenRepository;
+
+	@Transactional
+	public void deleteExpiredTokens() {
+		verificationTokenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
+	}
+
+}

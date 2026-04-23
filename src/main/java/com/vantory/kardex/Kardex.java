@@ -1,0 +1,96 @@
+package com.vantory.kardex;
+
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+
+import com.vantory.almacen.Almacen;
+import com.vantory.empresa.Empresa;
+import com.vantory.estado.Estado;
+import com.vantory.ordenCompra.OrdenCompra;
+import com.vantory.pedido.Pedido;
+import com.vantory.produccion.Produccion;
+import com.vantory.tipoMovimiento.TipoMovimiento;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "kardex")
+public class Kardex {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "kardex_generator")
+	@SequenceGenerator(name = "kardex_generator", sequenceName = "kardex_kar_id_seq", allocationSize = 1)
+	@Column(name = "kar_id", nullable = false)
+	private Long id;
+
+	@Column(name = "kar_fecha_hora")
+	private LocalDateTime fechaHora;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_almacen_id", referencedColumnName = "alm_id")
+	private Almacen almacen;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_produccion_id", referencedColumnName = "pro_id")
+	private Produccion produccion;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_tipo_movimiento_id", referencedColumnName = "tim_id")
+	private TipoMovimiento tipoMovimiento;
+
+	@Column(name = "kar_descripcion", length = 2048)
+	private String descripcion;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_estado_id", referencedColumnName = "est_id")
+	private Estado estado;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_empresa_id", referencedColumnName = "emp_id")
+	private Empresa empresa;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_cliente_proveedor_id", referencedColumnName = "emp_id")
+	private Empresa clienteProveedor;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_pedido_id", referencedColumnName = "ped_id")
+	private Pedido pedido;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "kar_orden_compra_id", referencedColumnName = "orc_id")
+	private OrdenCompra ordenCompra;
+
+    @Column(name = "kar_seg_username")
+    private String username;
+
+    @Column(name = "kar_seg_rol")
+    private String rol;
+
+    @Column(name = "kar_seg_ip")
+    private String ip;
+
+    @Column(name = "kar_seg_host")
+    private String host;
+
+    @Column(name = "kar_seg_fecha_hora", insertable = false)
+    private OffsetDateTime segFechaHora;
+
+}

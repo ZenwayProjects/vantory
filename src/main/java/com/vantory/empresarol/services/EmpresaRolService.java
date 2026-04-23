@@ -1,0 +1,140 @@
+package com.vantory.empresarol.services;
+
+import com.vantory.auditoria.AuthenticationService;
+import com.vantory.empresa.Empresa;
+import com.vantory.empresarol.EmpresaRol;
+import com.vantory.empresarol.dtos.requests.EmpresaRolCreateRequestDTO;
+import com.vantory.empresarol.dtos.requests.EmpresaRolUpdateRequestDTO;
+import com.vantory.empresarol.dtos.responses.EmpresaRolResponseDTO;
+import com.vantory.empresarol.mappers.EmpresaRolMapper;
+import com.vantory.empresarol.repositories.EmpresaRolRepository;
+import com.vantory.estado.Estado;
+import com.vantory.exceptionHandler.BadRequestException;
+import com.vantory.exceptionHandler.UserRoleForbiddenException;
+import com.vantory.rol.Rol;
+import com.vantory.utils.UserEmpresaService;
+import com.vantory.validator.EntidadValidatorFacade;
+import com.vantory.validator.parametrizacion.constantes.EstadoConstantes;
+import com.vantory.validator.parametrizacion.constantes.RolConstantes;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class EmpresaRolService {
+
+    private final EmpresaRolRepository empresaRolRepository;
+    private final EmpresaRolMapper empresaRolMapper;
+    private final UserEmpresaService userEmpresaService;
+    private final EntidadValidatorFacade entidadValidatorFacade;
+    private final AuthenticationService authenticationService;
+
+
+    public List<EmpresaRolResponseDTO>findAll(){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+        return empresaRolRepository
+                .findByEmpresaId(empresaId).stream().map(empresaRolMapper::toResponseDto).toList();
+    }
+
+    public EmpresaRolResponseDTO findById(Long id){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+        return empresaRolMapper.toResponseDto(entidadValidatorFacade.validarEmpresaRol(id, empresaId));
+    }
+
+    @Transactional
+    public EmpresaRolResponseDTO create(EmpresaRolCreateRequestDTO dto){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+        Empresa empresa = entidadValidatorFacade.validarEmpresa(empresaId);
+        if (RolConstantes.ROLE_ADMINISTRADOR_SISTEMA.equals(dto.getRolId())) {
+            throw new UserRoleForbiddenException("No puedes asignar ese rol");
+        }
+        if (empresaRolRepository.existsByEmpresaIdAndRolId(empresaId, dto.getRolId())) {
+            throw new BadRequestException("Ese rol ya está asignado a la empresa");
+        }
+
+        Rol rol = entidadValidatorFacade.validarRol(dto.getRolId());
+        Estado estado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+
+        String username = authenticationService.getAuthenticatedUser().getUsername();
+
+        EmpresaRol empresaRol = EmpresaRol.builder()
+                .empresa(empresa)
+                .rol(rol)
+                .createdBy(username)
+                .estado(estado)
+                .build();
+
+        empresaRol = empresaRolRepository.save(empresaRol);
+        return empresaRolMapper.toResponseDto(empresaRol);
+    }
+    @Transactional
+    public void update(Long id, EmpresaRolUpdateRequestDTO dto){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+        EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
+        String username = authenticationService.getAuthenticatedUser().getUsername();
+
+
+
+        if (dto.getRolId() != null) {
+            Rol rol = entidadValidatorFacade.validarRol(dto.getRolId());
+
+            if (RolConstantes.ROLE_ADMINISTRADOR_SISTEMA.equals(dto.getRolId())) {
+                throw new UserRoleForbiddenException("No puedes asignar ese rol");
+            }
+            empresaRol.setRol(rol);
+        }
+
+        if (dto.getEstadoId() != null) {
+            Estado estado = entidadValidatorFacade.validarEstadoGeneral(dto.getEstadoId());
+            empresaRol.setEstado(estado);
+        }
+
+        empresaRolMapper.updateEntityFromDto(dto, empresaRol);
+        empresaRol.setUpdatedBy(username);
+        empresaRol.setUpdatedAt(OffsetDateTime.now());
+    }
+
+    @Transactional
+    public void updateEstado(Long id, Long estadoId) {
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+        EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
+        Estado estado = entidadValidatorFacade.validarEstadoGeneral(estadoId);
+        String username = authenticationService.getAuthenticatedUser().getUsername();
+
+
+        empresaRol.setEstado(estado);
+        empresaRol.setUpdatedBy(username);
+        empresaRol.setUpdatedAt(OffsetDateTime.now());
+    }
+
+    @Transactional
+    public void toggleEstadoEmpresaRol(Long id){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+        Estado nuevoEstado;
+        EmpresaRol empresaRol = entidadValidatorFacade.validarEmpresaRol(id, empresaId);
+        if(empresaRol.getEstado().getId().equals(EstadoConstantes.ESTADO_GENERAL_ACTIVO)){
+            nuevoEstado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_INACTIVO);
+        }else {
+            nuevoEstado = entidadValidatorFacade.validarEstadoGeneral(EstadoConstantes.ESTADO_GENERAL_ACTIVO);
+        }
+        empresaRol.setEstado(nuevoEstado);
+    }
+
+    @Transactional
+    public void delete(Long id){
+        Long empresaId = userEmpresaService.getEmpresaIdFromCurrentRequest();
+
+        entidadValidatorFacade.validarEmpresaRol(id, empresaId);
+
+        empresaRolRepository.deleteById(id);
+    }
+
+
+}

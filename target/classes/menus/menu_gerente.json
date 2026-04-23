@@ -1,0 +1,34 @@
+[
+    {
+        "id": "reportes",
+        "text": "Reportes",
+        "icon": "People",
+        "children": [
+            {
+                "id": "RE_pedido",
+                "text": "Reporte de pedido",
+                "icon": "Settings"
+            },
+            {
+                "id": "RE_kardex",
+                "text": "Reporte de kardex",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "RE_pv",
+                "text": "Reporte de productos vencidos",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "RE_fc",
+                "text": "Reporte de factura",
+                "icon": "LocationCity"
+            },
+            {
+                "id": "RE_oc",
+                "text": "Reporte de orden compra",
+                "icon": "LocationCity"
+            }
+        ]
+    }
+]

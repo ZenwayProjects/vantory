@@ -1,0 +1,20 @@
+package com.vantory.departamento.repositories;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.vantory.departamento.Departamento;
+
+@Repository
+public interface DepartamentoRepository extends JpaRepository<Departamento, Long> {
+
+	Optional<Departamento> findByIdAndEmpresaId(Long id, Long empresaId);
+
+	List<Departamento> findByEmpresaIdOrderByIdAsc(Long empresaId);
+
+	List<Departamento> findByEmpresaIdAndEstadoIdNotOrderByIdAsc(Long empresaId, Long estadoId);
+
+}

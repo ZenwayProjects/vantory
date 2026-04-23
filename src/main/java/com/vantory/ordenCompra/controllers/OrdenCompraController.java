@@ -1,0 +1,75 @@
+package com.vantory.ordenCompra.controllers;
+
+import java.util.List;
+
+import com.vantory.ordenCompra.dtos.OrdenCompraCreateDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import com.vantory.articuloOrdenCompra.dtos.ArticuloOrdenCompraDTO;
+import com.vantory.articuloOrdenCompra.services.ArticuloOrdenCompraService;
+import com.vantory.ordenCompra.dtos.OrdenCompraDTO;
+import com.vantory.ordenCompra.services.OrdenCompraService;
+import com.vantory.utils.UriBuilderUtil;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/v1/orden-compra")
+@RequiredArgsConstructor
+public class OrdenCompraController {
+
+	private final OrdenCompraService ordenCompraService;
+
+	private final ArticuloOrdenCompraService articuloOrdenCompraService;
+
+	private final UriBuilderUtil uriBuilderUtil;
+
+	@GetMapping
+	public ResponseEntity<Page<OrdenCompraDTO>> findAll(@PageableDefault Pageable pageable) {
+		return ResponseEntity.ok(ordenCompraService.findAll(pageable));
+	}
+
+	@GetMapping("/{ordenCompraId}/articulos")
+	public ResponseEntity<List<ArticuloOrdenCompraDTO>> findArticulosByOrdenCompra(@PathVariable Long ordenCompraId) {
+		return ResponseEntity.ok(articuloOrdenCompraService.findAllByOrdenCompraId(ordenCompraId));
+	}
+
+	@GetMapping("/{requestedId}")
+	public ResponseEntity<OrdenCompraDTO> findById(@PathVariable Long requestedId) {
+		return ResponseEntity.ok(ordenCompraService.findById(requestedId));
+	}
+
+	@PostMapping
+	public ResponseEntity<Void> createOrdenCompra(@Valid @RequestBody OrdenCompraCreateDTO ordenCompraCreateDTO,
+			UriComponentsBuilder ucb) {
+		return ResponseEntity
+			.created(uriBuilderUtil.buildOrdenCompraUri((ordenCompraService.create(ordenCompraCreateDTO)).getId(), ucb))
+			.build();
+	}
+
+	@PutMapping("/{requestedId}")
+	public ResponseEntity<Void> updateOrdenCompra(@PathVariable Long requestedId,
+			@Valid @RequestBody OrdenCompraDTO ordenCompraDTO) {
+		ordenCompraService.update(requestedId, ordenCompraDTO);
+		return ResponseEntity.noContent().build();
+	}
+
+	@PatchMapping("/enviar-al-proveedor/{ordenCompraId}")
+	public ResponseEntity<Void> enviarOrdenCompraAlProveedor(@PathVariable Long ordenCompraId){
+		ordenCompraService.enviarOrdenCompraAlProveedor(ordenCompraId);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteOrdenCompra(@PathVariable Long id) {
+		ordenCompraService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
+
+}
